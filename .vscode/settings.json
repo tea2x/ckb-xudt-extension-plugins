@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "ckb_syscalls.h": "c",
+        "blockchain.h": "c",
+        "stdio.h": "c",
+        "molecule_builder.h": "c",
+        "molecule_reader.h": "c"
+    }
+}
