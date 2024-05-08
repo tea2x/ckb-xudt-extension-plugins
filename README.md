@@ -1,7 +1,7 @@
 ## Abstraction
-There's a desire to create hard capped tokens but with sudt it's not possible. Leveraging the modular design of XUDT, we can build extension plugins that help create limited tokens.
+There's a desire to create hard capped tokens but with sudt it's not possible. Leveraging the modular design of XUDT, we can build extension plugins that help create hard-capped tokens.
 
-hard_cap.c is A Dynamic Link Library script-extensions that work with CKB XUDT standard https://github.com/nervosnetwork/ckb-production-scripts/blob/master/c/xudt_rce.c, allowing for the creation of limited tokens.
+hard_cap.c is A Dynamic Link Library script-extension that works with [CKB XUDT standard](https://github.com/nervosnetwork/ckb-production-scripts/blob/master/c/xudt_rce.c), allowing for the creation of hard-capped tokens.
 
 ### 1. Build
 
@@ -10,17 +10,17 @@ hard_cap.c is A Dynamic Link Library script-extensions that work with CKB XUDT s
 ### 2. How to use this plugin
 
 #### 2.1. Cell deployment
-    - [xudt_rce](https://github.com/nervosnetwork/ckb-production-scripts/blob/master/c/xudt_rce.c) binary cell
-    - Hard_cap extension binary cell
-    - Total supply(remaining) cell: This is a [typeId cell](https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#type-id) with total supply info placed in the data field of the cell. TypeID ensure the singleton of totalsupply cell.
+- [xudt_rce](https://github.com/nervosnetwork/ckb-production-scripts/blob/master/c/xudt_rce.c) binary cell
+- Hard_cap extension binary cell
+- Total supply(remaining) cell: This is a [typeId cell](https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#type-id) with total supply info placed in the data field of the cell. TypeID ensure the singleton of totalsupply cell.
 
 <img width="462" alt="Screenshot 2024-05-08 at 15 07 29" src="https://github.com/tea2x/ckb-xudt-extension-plugins/assets/70423834/5c037c49-ad67-48d3-b92c-9c7062e81b58">
 
-*Note*: For transparence and security reasons, it is recommended to deploy these three cells as ownerless cells - meaning no one owns it. As so, total supply or xudt/extension logic will not be tampered with.
+*Note*: For transparence and security reasons, it is recommended to deploy these three cells as ownerless cells - meaning no one owns them. As so, total supply or xudt/extension logic will not be tampered with.
 
 #### 2.2. Composing our hard-capped token's typeScript
     The typeScript for an XUDT with hard_cap extension by this design is:
-```json
+```
 codeHash: <xudt_rce code hash>
 hashType: "data1"
 args: <owner's lockscript hash> + <xudt flag> + <ScriptVector*>
