@@ -15,9 +15,9 @@ typedef unsigned __int128 uint128_t;
 // The modes of operation for the script. 
 enum Mode
 {
-	Burn, // Consume an existing counter cell.
-	Create, // Create a new counter cell.
-	Transfer, // Transfer (update) a counter cell and increase its value.
+	Burn, // Consume/burn existing tokens.
+	Create, // Create new tokens.
+	Transfer, // Transfer (update) tokens
 };
 
 // sum xudt amount
@@ -37,7 +37,7 @@ static uint128_t sumXudt(size_t source) {
     return output_amount;
 }
 
-// Determines the mode of operation for the currently executing script.
+// determines the mode of operation for the currently executing script.
 static uint8_t determineMode() {
 	// Gather counts on the number of group input and groupt output cells.
 	uint128_t inputAmountCount = sumXudt(CKB_SOURCE_GROUP_INPUT);
@@ -53,6 +53,7 @@ static uint8_t determineMode() {
 	return Transfer;
 }
 
+// check if hard_cap cell exists in the source list
 static size_t findHardCappedCell(uint8_t *codeHashPtr, size_t source) {
     int ret = 0;
     size_t current = 0;
@@ -77,11 +78,10 @@ static size_t findHardCappedCell(uint8_t *codeHashPtr, size_t source) {
     return ERROR_NO_HARDCAP_CELL;
 }
 
-// dll public interface
+// DLL public interface
 __attribute__((visibility("default"))) int validate(int owner_mode, uint32_t i, uint8_t * args_ptr, uint32_t args_size) {
     /* with sudt, owner mode is god mode and is CREATION/BURN mode.
-       With extension1 we're saying that its not a god-CREATION mode anymore and coin creation must be restricted.
-       Now in owner_mode + CREATION, it must go through the following validation.
+       With this script hard_cap, in owner_mode + CREATION, it must go through the following validation.
     */ 
     enum Mode operationMode = determineMode();
     if (!(owner_mode && operationMode == Create))
