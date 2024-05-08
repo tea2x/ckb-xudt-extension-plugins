@@ -14,7 +14,7 @@ hard_cap.c is A Dynamic Link Library script-extensions that work with CKB XUDT s
     - Hard_cap extension binary cell
     - Total supply(remaining) cell: This is a [typeId cell](https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#type-id) with total supply info placed in the data field of the cell. TypeID ensure the singleton of totalsupply cell.
 
-<img width="462" alt="Screenshot 2024-05-08 at 15 03 40" src="https://github.com/tea2x/ckb-xudt-extension-plugins/assets/70423834/36be678d-f42a-44ea-8258-64d273ae955e">
+<img width="462" alt="Screenshot 2024-05-08 at 15 07 29" src="https://github.com/tea2x/ckb-xudt-extension-plugins/assets/70423834/5c037c49-ad67-48d3-b92c-9c7062e81b58">
 
 *Note*: For transparence and security reasons, it is recommended to deploy these three cells as ownerless cells - meaning no one owns it. As so, total supply or xudt/extension logic will not be tampered with.
 
