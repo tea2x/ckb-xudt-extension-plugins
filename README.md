@@ -16,7 +16,7 @@ hard_cap.c is A Dynamic Link Library script-extension that works with [CKB XUDT 
 
 <img width="462" alt="Screenshot 2024-05-08 at 15 07 29" src="https://github.com/tea2x/ckb-xudt-extension-plugins/assets/70423834/5c037c49-ad67-48d3-b92c-9c7062e81b58">
 
-*Note*: For transparence and security reasons, it is recommended to deploy these three cells as ownerless cells - meaning no one owns them. As so, total supply or xudt/extension logic will not be tampered with.
+*Note*: For transparence and security reasons, it is recommended to deploy extension script cell as an ownerless cells - meaning no one owns it. As so, total supply cell must be protected by lockScript total_supply_cell_lock.c
 
 #### 2.2. Composing our hard-capped token's typeScript
     The typeScript for an XUDT with hard_cap extension by this design is:
