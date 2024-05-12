@@ -21,15 +21,20 @@ PASSED_MBEDTLS_CFLAGS := -O3 -fPIC -nostdinc -nostdlib -DCKB_DECLARATION_ONLY -I
 BUILDER_DOCKER := nervos/ckb-riscv-gnu-toolchain@sha256:aae8a3f79705f67d505d1f1d5ddc694a4fd537ed1c7e9622420a470d59ba2ec3
 CLANG_FORMAT_DOCKER := kason223/clang-format@sha256:3cce35b0400a7d420ec8504558a02bdfc12fd2d10e40206f140c4545059cd95d
 
-all: build/hard_cap.so
+all: build/hard_cap.so build/ramt_cell_lock
 
 all-via-docker: ${PROTOCOL_HEADER}
 	docker run --rm -v `pwd`:/code ${BUILDER_DOCKER} bash -c "cd /code && make"
 
-ALL_C_SOURCE := $(wildcard c/hard_cap.c)
+ALL_C_SOURCE := $(wildcard c/hard_cap.c c/ramt_cell_lock.c)
 
 build/hard_cap.so: c/hard_cap.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $<
+	$(OBJCOPY) --only-keep-debug $@ $@.debug
+	$(OBJCOPY) --strip-debug --strip-all $@
+
+build/ramt_cell_lock: c/ramt_cell_lock.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 	$(OBJCOPY) --only-keep-debug $@ $@.debug
 	$(OBJCOPY) --strip-debug --strip-all $@
 

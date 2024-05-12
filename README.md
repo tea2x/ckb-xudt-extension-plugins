@@ -1,41 +1,72 @@
 ## Abstraction
-There's a desire to create hard capped tokens but with sudt it's not possible. Leveraging the modular design of XUDT, we can build extension plugins that help create hard-capped tokens.
-
-hard_cap.c is A Dynamic Link Library script-extension that works with [CKB XUDT standard](https://github.com/nervosnetwork/ckb-production-scripts/blob/master/c/xudt_rce.c), allowing for the creation of hard-capped tokens.
+There's a desire to create hard capped tokens but with sudt it's not possible. Leveraging the modular design of XUDT, we can build an extension plugin that help create hard-capped tokens.
 
 ### 1. Build
 
 `make all-via docker`
 
-### 2. How to use this plugin
+### 2. The idea
+By this design, the xudt tokens of this type (hard capped) will link to a "remaining amount" cell. In each creation transaction of this type, the "remaining amount cell" will be consumed/destroyed and created with new remaining amount - effectively maintaining a number for "the remaining amount". Guides to create this remaining amount cell will be put below at 2.2
 
-#### 2.1. Cell deployment
+### 3. Setting up
+#### 3.1. Executable binary cell deployment
 - [xudt_rce](https://github.com/nervosnetwork/ckb-production-scripts/blob/master/c/xudt_rce.c) binary cell
-- Hard_cap extension binary cell
-- Total supply(remaining) cell: This is a [typeId cell](https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#type-id) with total supply info placed in the data field of the cell. TypeID ensure the singleton of totalsupply cell.
+- Hard_cap extension binary cell (hard_cap.so)
+- "Remaining amount" cell lock script binary (ramt_cell_lock)
 
-<img width="462" alt="Screenshot 2024-05-08 at 15 07 29" src="https://github.com/tea2x/ckb-xudt-extension-plugins/assets/70423834/5c037c49-ad67-48d3-b92c-9c7062e81b58">
+*Note*: The "remaining amount cell" must be protected by the lockScript ramt_cell_lock.c
 
-*Note*: For transparence and security reasons, it is recommended to deploy these three cells as ownerless cells - meaning no one owns them. As so, total supply or xudt/extension logic will not be tampered with.
-
-#### 2.2. Composing our hard-capped token's typeScript
-    The typeScript for an XUDT with hard_cap extension by this design is:
+#### 3.2. Composing a remaining amount cell
+A remaining amount cell, just like any other cell, contains following major fields:
+```json
+{
+    lock: <hard-cap-lock-script>,
+    type: <typeid>,
+    data: <remaining-amount::4bytes>
+}
 ```
+- With hard-cap-lock-script:
+```json
+{
+    codeHash: <remaining-amount-cell-binary-hash>,
+    hashType: "data1",
+    args: "0x"
+}
+```
+- With typeId: to create a typeId, follow [this guide](https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#type-id).
+- With remaining-amount: a 4 bit LE hexa number that holds the value of the remaining amount.
+
+#### 3.3. Composing our hard-capped token's cell
+A hard-capped XUDT token cell, just like any other cell, contains following major fields:
+
+```json
+{
+    lock: <owner-lock>,
+    type: <hard-capped-xudt-type-script>,
+    data: <amount>+ ...
+}
+```
+
+The important part is the hard-capped-xudt-type-script which lables + mark our tokens:
+```json
 codeHash: <xudt_rce code hash>
 hashType: "data1"
-args: <owner's lockscript hash> + <xudt flag> + <ScriptVector*>
+args: <owner's lockscript hash> + <xudt flag> + <ScriptVector>
 ```
 
-(*) Script vector contains 1 Script element:
+- With Script vector contains 1 Script element:
 ```json
 codeHash: <hard_cap code hash>
 hashType: "data1"
-args: <remaining cell's typeId hash>
+args: <remaining amount cell's typeId hash>
 ```
 
-#### 2.3 create tokens
+### 4. Creating tokens
 In three modes: creation, transfer, and burn. This extension only has effects on the 'creation' mode.
 
-Token creation is as simple as with SUDT but it is required to place the Total supply cell in the inputs, and calculate another "remaning supply" in the outputs. Otherwise token creation will fail
+Token creation is as simple as with SUDT but it is required to place the "remaining amount" cell in the inputs, and calculate another "remaning supply" in the outputs and inputs with the correct remaining-amount calculation. Otherwise token creation will fail
 
 <img width="462" alt="Screenshot 2024-05-08 at 15 05 10" src="https://github.com/tea2x/ckb-xudt-extension-plugins/assets/70423834/16a2d9aa-ddfb-485a-975a-55866f49bf98">
+
+### 5. Note
+When you see `hashType: "data1",` present in a lockscript or a typescript in this doc, it means the lock or type are not upgradeable. This repo is a personal project and it might contain bugs and need some auditing work to be deploy on-chain forever with option "data1". Consider to use `hashType: "type",` and make it upgradeable when needed. For upgradeable scripts, follow https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#upgradable-script for more information. 
