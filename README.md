@@ -6,7 +6,7 @@ There's a desire to create hard capped tokens but with sudt it's not possible. L
 `make all-via docker`
 
 ### 2. The idea
-By this design, the xudt tokens of this type (hard capped) will link to a "remaining amount" cell. In each creation transaction of this type, the "remaining amount cell" will be consumed/destroyed and created with new remaining amount - effectively maintaining a number for "the remaining amount". Guides to create this remaining amount cell will be put below at 2.2
+By this design, the xudt tokens of this type (hard capped) will link to a "remaining amount" cell. In each creation transaction of this type, the "remaining amount cell" will be consumed/destroyed and created with new remaining amount - effectively maintaining a number for "the remaining amount". Guides to create this remaining amount cell will be put below.
 
 ### 3. Setting up
 #### 3.1. Executable binary cell deployment
