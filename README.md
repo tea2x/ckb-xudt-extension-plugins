@@ -70,3 +70,6 @@ Token creation is as simple as with SUDT but it is required to place the "remain
 
 ### 5. Note
 When you see `hashType: "data1",` present in a lockscript or a typescript in this doc, it means the lock or type are not upgradeable. This repo is a personal project and it might contain bugs and need some auditing work to be deploy on-chain forever with option "data1". Consider to use `hashType: "type",` and make it upgradeable when needed. For upgradeable scripts, follow https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0022-transaction-structure/0022-transaction-structure.md#upgradable-script for more information. 
+
+### 6. Example code in lumos
+https://github.com/tea2x/developer-training-course/blob/master/Lab-XUDT/index.js
