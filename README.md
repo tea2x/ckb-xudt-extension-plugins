@@ -1,5 +1,5 @@
 ## Abstraction
-There's a desire to create hard capped tokens but with sudt it's not possible. Leveraging the modular design of XUDT, we can build an extension plugin that help create hard-capped tokens.
+There's a desire to create hard capped tokens but with [SUDT](https://github.com/nervosnetwork/rfcs/blob/master/rfcs/0025-simple-udt/0025-simple-udt.md) it's not possible. Leveraging the modular design of [XUDT](https://talk.nervos.org/t/rfc-extensible-udt/5337), we can build an extension plugin that help create hard-capped tokens.
 
 ### 1. Build
 
