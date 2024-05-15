@@ -21,7 +21,7 @@ enum Mode
 };
 
 // sum xudt amount
-static uint128_t sumXudt(size_t source) {
+static uint128_t sum_xudt(size_t source) {
     uint128_t output_amount = 0;
     size_t counter = 0;
     uint64_t len = 16;
@@ -38,23 +38,23 @@ static uint128_t sumXudt(size_t source) {
 }
 
 // determines the mode of operation for the currently executing script.
-static uint8_t determineMode() {
+static uint8_t determine_mode() {
 	// Gather counts on the number of group input and groupt output cells.
-	uint128_t inputAmountCount = sumXudt(CKB_SOURCE_GROUP_INPUT);
-	uint128_t outputAmountCount = sumXudt(CKB_SOURCE_GROUP_OUTPUT);
+	uint128_t input_amount_count = sum_xudt(CKB_SOURCE_GROUP_INPUT);
+	uint128_t output_amount_count = sum_xudt(CKB_SOURCE_GROUP_OUTPUT);
 
 	// Detect the operation based on the cell count.
-	if (inputAmountCount > outputAmountCount) {
+	if (input_amount_count > output_amount_count) {
 		return Burn;
 	}
-	if (inputAmountCount < outputAmountCount) {
+	if (input_amount_count < output_amount_count) {
 		return Create;
 	}
 	return Transfer;
 }
 
 // check if hard_cap cell exists in the source list
-static size_t findHardCappedCell(uint8_t *codeHashPtr, size_t source) {
+static size_t find_hard_capped_cell(uint8_t *code_hash_ptr, size_t source) {
     int ret = 0;
     size_t current = 0;
     while (current < SIZE_MAX) {
@@ -65,7 +65,7 @@ static size_t findHardCappedCell(uint8_t *codeHashPtr, size_t source) {
             case CKB_ITEM_MISSING:
                 break;
             case CKB_SUCCESS:
-                if (memcmp(codeHashPtr, hash, 32) == 0) {
+                if (memcmp(code_hash_ptr, hash, 32) == 0) {
                     /* Found a match */
                     return current;
                 }
@@ -83,34 +83,34 @@ __attribute__((visibility("default"))) int validate(int owner_mode, uint32_t i, 
     /* with sudt, owner mode is god mode and is CREATION/BURN mode.
        With this script hard_cap, in owner_mode + CREATION, it must go through the following validation.
     */ 
-    enum Mode operationMode = determineMode();
-    if (!(owner_mode && operationMode == Create))
+    enum Mode operation_mode = determine_mode();
+    if (!(owner_mode && operation_mode == Create))
         return CKB_SUCCESS;
 
     // find the hardcap(a typeId) cell in the inputs
-    uint32_t oldHardcap = 0;
+    uint32_t old_hard_cap = 0;
     uint64_t len = 4;
-    size_t findRet;
-    findRet = findHardCappedCell(args_ptr, CKB_SOURCE_INPUT);
-    if (findRet == ERROR_NO_HARDCAP_CELL)
-        return findRet;
-    ckb_load_cell_data((uint8_t *)&oldHardcap, &len, 0, findRet, CKB_SOURCE_INPUT);
+    size_t find_ret;
+    find_ret = find_hard_capped_cell(args_ptr, CKB_SOURCE_INPUT);
+    if (find_ret == ERROR_NO_HARDCAP_CELL)
+        return find_ret;
+    ckb_load_cell_data((uint8_t *)&old_hard_cap, &len, 0, find_ret, CKB_SOURCE_INPUT);
 
     // find the hardcap(a typeId) cell in the outputs
-    uint32_t newHardcap = 0;
-    findRet = findHardCappedCell(args_ptr, CKB_SOURCE_OUTPUT);
-    if (findRet == ERROR_NO_HARDCAP_CELL)
-        return findRet;
-    ckb_load_cell_data((uint8_t *)&newHardcap, &len, 0, findRet, CKB_SOURCE_OUTPUT);
+    uint32_t new_hard_cap = 0;
+    find_ret = find_hard_capped_cell(args_ptr, CKB_SOURCE_OUTPUT);
+    if (find_ret == ERROR_NO_HARDCAP_CELL)
+        return find_ret;
+    ckb_load_cell_data((uint8_t *)&new_hard_cap, &len, 0, find_ret, CKB_SOURCE_OUTPUT);
 
     // fetch and sum all xudt amount in the outputs
-    uint128_t output_amount = sumXudt(CKB_SOURCE_GROUP_OUTPUT);
+    uint128_t output_amount = sum_xudt(CKB_SOURCE_GROUP_OUTPUT);
     
     // validate hardcap rules
-    if (output_amount > (uint128_t)oldHardcap)
+    if (output_amount > (uint128_t)old_hard_cap)
         return ERROR_CAN_NOT_MINT_OVER_HARDCAP;
     
-    if ((uint128_t)newHardcap != ((uint128_t)oldHardcap - output_amount))
+    if ((uint128_t)new_hard_cap != ((uint128_t)old_hard_cap - output_amount))
         return ERROR_WRONG_HARDCAP_CALCULATION;
 
     return CKB_SUCCESS;
