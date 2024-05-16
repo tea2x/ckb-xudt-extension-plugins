@@ -54,6 +54,36 @@ size_t determine_rmng_amt_cell_output_index() {
   return CKB_INDEX_OUT_OF_BOUND;
 }
 
+// check if the type script links to the total-supply cell
+bool check_link(unsigned char * type_script, unsigned long long len, unsigned char * total_supply_type_hash) {
+  mol_seg_t type_script_seg;
+  type_script_seg.ptr = type_script;
+  type_script_seg.size = len;
+  mol_seg_t xudt_args = MolReader_Script_get_args(&type_script_seg);
+  mol_seg_t args_bytes_seg = MolReader_Bytes_raw_bytes(&xudt_args);
+  if (xudt_args.size > (BLAKE2B_BLOCK_SIZE + XUDT_FLAGS_SIZE)) {
+    mol_seg_t serialized_script_vec;
+    serialized_script_vec.ptr = args_bytes_seg.ptr + BLAKE2B_BLOCK_SIZE + XUDT_FLAGS_SIZE;
+    serialized_script_vec.size = args_bytes_seg.size - BLAKE2B_BLOCK_SIZE - XUDT_FLAGS_SIZE;
+    uint32_t script_vec_len = MolReader_ScriptVec_length(&serialized_script_vec);
+    // loop over the script vec, process each script
+    for (uint8_t i = 0; i < script_vec_len; i++) {
+      mol_seg_res_t script = MolReader_ScriptVec_get(&serialized_script_vec, i);
+      if(script.errno != 0) {
+        break;
+      }
+      mol_seg_t args = MolReader_Script_get_args(&script.seg);
+      mol_seg_t args_bytes_seg = MolReader_Bytes_raw_bytes(&args);
+      
+      // an output with a typeScript that links to the total supply typeId found
+      if (memcmp(args_bytes_seg.ptr, total_supply_type_hash, 32) == 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // main
 int main() {
   /*
@@ -79,41 +109,15 @@ int main() {
       unsigned char type_script[XUDT_HARDCAP_TYPE_SIZE];
       ret = ckb_load_cell_by_field(type_script, &len, 0, index, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_TYPE);
       switch (ret) {
-          case CKB_ITEM_MISSING:
-              break;
-          case CKB_SUCCESS: {
-              mol_seg_t type_script_seg;
-              type_script_seg.ptr = type_script;
-              type_script_seg.size = len;
-              mol_seg_t xudt_args = MolReader_Script_get_args(&type_script_seg);
-              mol_seg_t args_bytes_seg = MolReader_Bytes_raw_bytes(&xudt_args);
-              if (xudt_args.size <= (BLAKE2B_BLOCK_SIZE + XUDT_FLAGS_SIZE)) {
-                break;
-              } else {
-                mol_seg_t serialized_script_vec;
-                serialized_script_vec.ptr = args_bytes_seg.ptr + BLAKE2B_BLOCK_SIZE + XUDT_FLAGS_SIZE;
-                serialized_script_vec.size = args_bytes_seg.size - BLAKE2B_BLOCK_SIZE - XUDT_FLAGS_SIZE;
-                uint32_t script_vec_len = MolReader_ScriptVec_length(&serialized_script_vec);
-                // loop over the script vec, process each script
-                for (uint8_t i = 0; i < script_vec_len; i++) {
-                  mol_seg_res_t script = MolReader_ScriptVec_get(&serialized_script_vec, i);
-                  if(script.errno != 0) {
-                    break;
-                  }
-                  mol_seg_t args = MolReader_Script_get_args(&script.seg);
-                  mol_seg_t args_bytes_seg = MolReader_Bytes_raw_bytes(&args);
-                  
-                  // an output with a typeScript that links to the total supply typeId found
-                  if (memcmp(args_bytes_seg.ptr, total_supply_type_hash, 32) == 0) {
-                    return CKB_SUCCESS;
-                  }
-                }
-              }
-              break;
+        case CKB_ITEM_MISSING:
+          break;
+        case CKB_SUCCESS:
+          if (check_link(type_script, len, total_supply_type_hash)) {
+            return CKB_SUCCESS;
           }
-          default: {
-            return ERROR_UNLOCK_FAIL;
-          }
+          break;
+        default:
+          return ERROR_UNLOCK_FAIL;
       }
       index++;
   }
