@@ -55,7 +55,7 @@ size_t determine_rmng_amt_cell_output_index() {
 }
 
 // check if the type script links to the total-supply cell
-bool check_link(unsigned char * type_script, unsigned long long len, unsigned char * total_supply_type_hash) {
+bool check_link(unsigned char * type_script, unsigned long long len, unsigned char * rmng_amt_type_hash) {
   mol_seg_t type_script_seg;
   type_script_seg.ptr = type_script;
   type_script_seg.size = len;
@@ -76,7 +76,7 @@ bool check_link(unsigned char * type_script, unsigned long long len, unsigned ch
       mol_seg_t args_bytes_seg = MolReader_Bytes_raw_bytes(&args);
       
       // an output with a typeScript that links to the total supply typeId found
-      if (memcmp(args_bytes_seg.ptr, total_supply_type_hash, 32) == 0) {
+      if (memcmp(args_bytes_seg.ptr, rmng_amt_type_hash, 32) == 0) {
         return true;
       }
     }
@@ -91,14 +91,15 @@ int main() {
     fetch the typeScript hash accompanied within the cell
   */
   int ret = 0;
-  uint8_t total_supply_type_hash[BLAKE2B_BLOCK_SIZE];
+  // remaining amount cell type script hash
+  uint8_t rmng_amt_type_hash[BLAKE2B_BLOCK_SIZE];
   uint64_t len = BLAKE2B_BLOCK_SIZE;
   size_t find_ret = determine_rmng_amt_cell_output_index();
   if (find_ret == CKB_INDEX_OUT_OF_BOUND) {
     return ERROR_UNLOCK_FAIL;
   }
 
-  ret = ckb_load_cell_by_field(total_supply_type_hash, &len, 0, find_ret, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_TYPE_HASH);
+  ret = ckb_load_cell_by_field(rmng_amt_type_hash, &len, 0, find_ret, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_TYPE_HASH);
   if (ret != CKB_SUCCESS) {
     return ERROR_UNLOCK_FAIL;
   }
@@ -112,7 +113,7 @@ int main() {
         case CKB_ITEM_MISSING:
           break;
         case CKB_SUCCESS:
-          if (check_link(type_script, len, total_supply_type_hash)) {
+          if (check_link(type_script, len, rmng_amt_type_hash)) {
             return CKB_SUCCESS;
           }
           break;
