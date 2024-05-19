@@ -15,6 +15,7 @@
 #define ERROR_SYSCALL 2
 #define ERROR_SCRIPT_TOO_LONG 3
 #define ERROR_ENCODING 4
+#define ERROR_NO_TYPE_ACCOMPANIED 5
 
 size_t determine_rmng_amt_cell_output_index() {
   /*
@@ -97,6 +98,9 @@ int main() {
   if (ret != CKB_SUCCESS) {
     return ERROR_UNLOCK_FAIL;
   }
+  if (ret == CKB_ITEM_MISSING) {
+    return ERROR_NO_TYPE_ACCOMPANIED;
+  }
 
   size_t index = 0;
   while (index < SIZE_MAX) {
@@ -107,7 +111,7 @@ int main() {
       mol_seg_t type_script_seg;
       type_script_seg.ptr = (uint8_t *)type_script;
       type_script_seg.size = len;
-      
+
       if (MolReader_Script_verify(&type_script_seg, false) != MOL_OK) {
         return ERROR_ENCODING;
       }

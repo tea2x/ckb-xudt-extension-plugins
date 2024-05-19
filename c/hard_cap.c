@@ -78,7 +78,7 @@ static size_t find_hard_capped_cell(uint8_t *code_hash_ptr, size_t source) {
     return ERROR_NO_HARDCAP_CELL;
 }
 
-// DLL public interface
+// hard-cap extension DLL public interface
 __attribute__((visibility("default"))) int validate(int owner_mode, uint32_t i, uint8_t * args_ptr, uint32_t args_size) {
     /* with sudt, owner mode is god mode and is CREATION/BURN mode.
        With this script hard_cap, in owner_mode + CREATION, it must go through the following validation.

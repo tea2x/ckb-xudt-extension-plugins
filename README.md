@@ -6,7 +6,7 @@ There's a desire to create hard capped tokens but with [SUDT](https://github.com
 `make all-via docker`
 
 ### 2. The idea
-By this design, the xudt tokens of this type (hard capped) will link to a "remaining amount" cell. In each creation transaction of this type, the "remaining amount cell" will be consumed/destroyed and created with new remaining amount - effectively maintaining a number for "the remaining amount". Guides to create this remaining amount cell will be put below.
+By this design, the xudt tokens of this "type" (hard capped) will link to a "remaining amount" cell. In each creation transaction of this type, the "remaining amount cell" must be consumed/destroyed and created with a new remaining amount - effectively maintaining a number for "the remaining amount". Guides to create this remaining amount cell will be put below.
 
 ### 3. Setting up
 #### 3.1. Executable binary cell deployment
@@ -20,12 +20,12 @@ By this design, the xudt tokens of this type (hard capped) will link to a "remai
 A remaining amount cell, just like any other cell, contains following major fields:
 ```json
 {
-    lock: <hard-cap-lock-script>,
+    lock: <remaining-amount-cell-lock-script>,
     type: <typeid>,
     data: <remaining-amount::4bytes>
 }
 ```
-- With hard-cap-lock-script:
+- With remaining-amount-cell-lock-script:
 ```json
 {
     codeHash: <remaining-amount-cell-binary-hash>,
@@ -47,18 +47,22 @@ A hard-capped XUDT token cell, just like any other cell, contains following majo
 }
 ```
 
-The important part is the hard-capped-xudt-type-script which lables + mark our tokens:
+The important part is the hard-capped-xudt-type-script which lables + marks our tokens:
 ```json
-codeHash: <xudt_rce code hash>
-hashType: "data1"
-args: <owner's lockscript hash> + <xudt flag> + <ScriptVector>
+{
+    codeHash: <xudt_rce code hash>
+    hashType: "data1"
+    args: <owner's lockscript hash> + <xudt flag> + <ScriptVector>
+}
 ```
 
 - With Script vector contains 1 Script element:
 ```json
-codeHash: <hard_cap code hash>
-hashType: "data1"
-args: <remaining amount cell's typeId hash>
+{
+    codeHash: <hard_cap code hash>
+    hashType: "data1"
+    args: <remaining amount cell's typeId hash>
+}
 ```
 
 ### 4. Creating tokens
