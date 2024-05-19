@@ -4,7 +4,6 @@
 #include "blockchain.h"
 #include "ckb_syscalls.h"
 
-// the typeScript specifically designed xudt hard_cap is 162 bytes
 #define XUDT_HARDCAP_TYPE_SIZE 32768
 #define BLAKE2B_BLOCK_SIZE 32
 #define XUDT_FLAGS_SIZE 4
@@ -13,17 +12,15 @@
 
 // error
 #define ERROR_UNLOCK_FAIL 1
-#define ERROR_INVALID_MOL_FORMAT 2
-#define ERROR_SYSCALL 3
-#define ERROR_SCRIPT_TOO_LONG 4
-#define ERROR_ENCODING 5
+#define ERROR_SYSCALL 2
+#define ERROR_SCRIPT_TOO_LONG 3
+#define ERROR_ENCODING 4
 
 size_t determine_rmng_amt_cell_output_index() {
   /*
     Load the current script hash - which is a lockScript hash.
     No exception since lockScript is a must at every cell
   */
-
   uint8_t hash[BLAKE2B_BLOCK_SIZE];
   uint64_t len = BLAKE2B_BLOCK_SIZE;
   int ret = ckb_load_script_hash(hash, &len, 0);
@@ -55,11 +52,8 @@ size_t determine_rmng_amt_cell_output_index() {
 }
 
 // check if the type script links to the total-supply cell
-bool check_link(unsigned char * type_script, unsigned long long len, unsigned char * rmng_amt_type_hash) {
-  mol_seg_t type_script_seg;
-  type_script_seg.ptr = type_script;
-  type_script_seg.size = len;
-  mol_seg_t xudt_args = MolReader_Script_get_args(&type_script_seg);
+bool check_link(mol_seg_t * type_script_seg, unsigned char * rmng_amt_type_hash) {
+  mol_seg_t xudt_args = MolReader_Script_get_args(type_script_seg);
   mol_seg_t args_bytes_seg = MolReader_Bytes_raw_bytes(&xudt_args);
   if (xudt_args.size > (BLAKE2B_BLOCK_SIZE + XUDT_FLAGS_SIZE)) {
     mol_seg_t serialized_script_vec;
@@ -91,7 +85,7 @@ int main() {
     fetch the typeScript hash accompanied within the cell
   */
   int ret = 0;
-  // remaining amount cell type script hash
+  // remaining-amount cell type script hash
   uint8_t rmng_amt_type_hash[BLAKE2B_BLOCK_SIZE];
   uint64_t len = BLAKE2B_BLOCK_SIZE;
   size_t find_ret = determine_rmng_amt_cell_output_index();
@@ -109,11 +103,22 @@ int main() {
       uint64_t len = XUDT_HARDCAP_TYPE_SIZE;
       unsigned char type_script[XUDT_HARDCAP_TYPE_SIZE];
       ret = ckb_load_cell_by_field(type_script, &len, 0, index, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_TYPE);
+
+      mol_seg_t type_script_seg;
+      type_script_seg.ptr = (uint8_t *)type_script;
+      type_script_seg.size = len;
+      
+      if (MolReader_Script_verify(&type_script_seg, false) != MOL_OK) {
+        return ERROR_ENCODING;
+      }
+      if (len > XUDT_HARDCAP_TYPE_SIZE) {
+        return ERROR_SCRIPT_TOO_LONG;
+      }
       switch (ret) {
         case CKB_ITEM_MISSING:
           break;
         case CKB_SUCCESS:
-          if (check_link(type_script, len, rmng_amt_type_hash)) {
+          if (check_link(&type_script_seg, rmng_amt_type_hash)) {
             return CKB_SUCCESS;
           }
           break;
